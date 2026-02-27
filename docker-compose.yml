@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: mbti-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mbti_db
+      MYSQL_USER: mbti_user
+      MYSQL_PASSWORD: mbti_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - mbti-network
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  # PostgreSQL数据库（可选）
+  postgres:
+    image: postgres:15
+    container_name: mbti-postgres
+    environment:
+      POSTGRES_DB: mbti_db
+      POSTGRES_USER: mbti_user
+      POSTGRES_PASSWORD: mbti_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - mbti-network
+
+  # Redis缓存（可选）
+  redis:
+    image: redis:7-alpine
+    container_name: mbti-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - mbti-network
+
+  # MBTI API应用
+  mbti-api:
+    build: .
+    container_name: mbti-api
+    environment:
+      DB_TYPE: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: mbti_db
+      DB_USER: mbti_user
+      DB_PASSWORD: mbti_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "5000:5000"
